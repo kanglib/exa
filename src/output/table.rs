@@ -95,7 +95,6 @@ impl Columns {
         }
 
         if self.time_types.modified {
-            #[cfg(unix)]
             columns.push(Column::Timestamp(TimeType::Modified));
         }
 
@@ -105,12 +104,10 @@ impl Columns {
         }
 
         if self.time_types.created {
-            #[cfg(unix)]
             columns.push(Column::Timestamp(TimeType::Created));
         }
 
         if self.time_types.accessed {
-            #[cfg(unix)]
             columns.push(Column::Timestamp(TimeType::Accessed));
         }
 
@@ -128,7 +125,6 @@ pub enum Column {
     #[cfg(unix)]
     Permissions,
     FileSize,
-    #[cfg(unix)]
     Timestamp(TimeType),
     #[cfg(unix)]
     Blocks,
@@ -180,7 +176,6 @@ impl Column {
             #[cfg(unix)]
             Column::Permissions => "Permissions",
             Column::FileSize => "Size",
-            #[cfg(unix)]
             Column::Timestamp(t) => t.header(),
             #[cfg(unix)]
             Column::Blocks => "Blocks",
@@ -300,7 +295,7 @@ impl Environment {
         let tz = match determine_time_zone() {
             Ok(t) => Some(t),
             Err(ref e) => {
-                println!("Unable to determine time zone: {}", e);
+                // println!("Unable to determine time zone: {}", e);
                 None
             }
         };
@@ -413,22 +408,22 @@ impl<'a, 'f> Table<'a> {
             Column::Group => file.group().render(self.colours, &*self.env.lock_users()),
             Column::GitStatus => self.git_status(file).render(self.colours),
 
-            #[cfg(unix)]
             Column::Timestamp(Modified) => {
                 file.modified_time()
                     .render(self.colours.date, &self.env.tz, &self.time_format)
             }
-            #[cfg(unix)]
             Column::Timestamp(Changed) => {
+                #[cfg(unix)]
                 file.changed_time()
+                    .render(self.colours.date, &self.env.tz, &self.time_format);
+                #[cfg(windows)]
+                file.created_time()
                     .render(self.colours.date, &self.env.tz, &self.time_format)
             }
-            #[cfg(unix)]
             Column::Timestamp(Created) => {
                 file.created_time()
                     .render(self.colours.date, &self.env.tz, &self.time_format)
             }
-            #[cfg(unix)]
             Column::Timestamp(Accessed) => {
                 file.accessed_time()
                     .render(self.colours.date, &self.env.tz, &self.time_format)
